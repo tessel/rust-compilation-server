@@ -1,0 +1,19 @@
+{
+  "author": "",
+  "name": "rust-compilation-server",
+  "description": "A server designed to build Rust pprojects for Tessel2",
+  "version": "0.0.0",
+  "repository": {
+    "url": ""
+  },
+  "dependencies": {
+    "express": "^4.13.3",
+    "tar-fs": "^1.9.0",
+    "temp": "^0.8.3"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {},
+  "engines": {
+    "node": "*"
+  }
+}
