@@ -18,6 +18,10 @@ var tmpPrefix = "tessel-rust-compile"
 // Automatically track and cleanup files at exit
 temp.track();
 
+app.get('/', (req, res) => {
+  res.send('Tessel Rust Cross Compilation Server!');
+})
+
 // Accept post requests to this route
 app.post('/rust-compile', function(req, res) {
     var projectName = req.headers['x-project-folder'];
@@ -67,5 +71,7 @@ app.post('/rust-compile', function(req, res) {
     });
 });
 
-// Needs to be 5000 for port forwarding on Virtual box to work
-app.listen(5000)
+
+app.listen(process.env.PORT || 8080);
+
+console.log('Running on http://localhost:' + process.env.PORT || 8080);
