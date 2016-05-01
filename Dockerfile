@@ -3,13 +3,20 @@ FROM ubuntu:14.04
 # Install all of our dependencies
 RUN apt-get update && apt-get install -y wget realpath git gcc python make curl
 
+# Create app directory
+# Note: if you change this, you have to change the line under TODO below
+WORKDIR /usr/x-compile
+
 # Pull down and extract the OpenWRT SDK
 RUN wget https://s3.amazonaws.com/builds.tessel.io/t2/OpenWRT+SDK/OpenWrt-SDK-ramips-mt7620_gcc-4.8-linaro_uClibc-0.9.33.2.Linux-x86_64.tar.bz2
 RUN tar xf OpenWrt-SDK-ramips-mt7620_gcc-4.8-linaro_uClibc-0.9.33.2.Linux-x86_64.tar.bz2
 
 # Ensure our cross compiler is on our path
-ENV STAGING_DIR  $PWD/OpenWrt-SDK-ramips-mt7620_gcc-4.8-linaro_uClibc-0.9.33.2.Linux-x86_64/staging_dir
+# TODO: Figure out why the ENV command isn't resolving $PWD correctly (evaluates to '/' in this case)
+ENV STAGING_DIR /usr/x-compile/OpenWrt-SDK-ramips-mt7620_gcc-4.8-linaro_uClibc-0.9.33.2.Linux-x86_64/staging_dir
 ENV PATH $STAGING_DIR/toolchain-mipsel_24kec+dsp_gcc-4.8-linaro_uClibc-0.9.33.2/bin/:$PATH
+
+RUN echo $STAGING_DIR
 
 # Pull down Rust source @ 1.5.0
 RUN git clone https://github.com/rust-lang/rust; cd rust; git checkout tags/1.5.0
@@ -30,15 +37,14 @@ RUN ./rust-cross-libs.sh --rust-prefix=$PWD/rust-root --rust-git=rust --target-j
 ENV USER tesselator
 
 # Set our PATH so we can use Rust binaries and our newly compiled standard lib
-ENV PATH $PWD/rust-root/bin:$PATH
-ENV LD_LIBRARY_PATH $PWD/rust-root/lib
-ENV RUST_TARGET_PATH $PWD
+ENV PATH /usr/x-compile/rust-root/bin:$PATH
+ENV LD_LIBRARY_PATH /usr/x-compile/rust-root/lib
+ENV RUST_TARGET_PATH /usr/x-compile
 
 # Install Node.js
 RUN curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash - && sudo apt-get install -y nodejs
 
 # Create app directory
-RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
 # Install app dependencies
@@ -53,6 +59,8 @@ ENV PORT 8080
 
 # Expose our port
 EXPOSE $PORT
+
+ENV DEBUG *
 
 # Start up our server
 CMD ["node", "index.js"]

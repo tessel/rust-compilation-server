@@ -31,9 +31,10 @@ app.post('/rust-compile', function(req, res) {
         res.statusCode(400, "Project name header not provided");
         return;
     }
+
     // Create a temporary directory for the incoming project
     temp.mkdir(tmpPrefix, function(err, dirPath) {
-        debug("Saving", projectName, 'to', dirPath, 'with binary name', binaryName);
+      debug("Saving", projectName, 'to', dirPath, 'with binary name', binaryName);
       // unzip and extract the binary tarball
       req.pipe(tar.extract(dirPath))
       // Once that process completes
@@ -43,17 +44,12 @@ app.post('/rust-compile', function(req, res) {
           var child = exec('cargo build --target=tessel2 --release',
           {
               // Work out of the directory of the created folder
-              cwd: projectPath
+              cwd: projectPath,
           },
           function (error, stdout, stderr) {
+            debug(`output of compilation - error: ${error}, stdout: ${stdout}, stderr: ${stderr}`)
               // If we had stderr output (like compilation failure)
-              if (stderr !== '') {
-                  // Something bad happened, report the error
-                  res.status(400).send(stderr);
-                  return;
-              }
-              // If we had a different kind of error
-              else if (error !== null) {
+              if (error !== null) {
                   // Report the error
                   res.status(400).send(error);
               }
@@ -61,10 +57,12 @@ app.post('/rust-compile', function(req, res) {
               else {
                   // Figure out the path to the binary
                   var binaryPath = path.join(projectPath, 'target/tessel2/release/', binaryName);
-                  // Pack up the compiled binary and send it back down
-                  fs.createReadStream(binaryPath).pipe(res);
                   // Send the status flag
                   res.status(200);
+                  // Pack up the compiled binary and send it back down
+                  var stream = fs.createReadStream(binaryPath).pipe(res);
+                  // When we finish writing the file to the CLI, delete the temp folder
+                  stream.on('finish', temp.cleanupSync);
               }
           });
       });
@@ -74,4 +72,4 @@ app.post('/rust-compile', function(req, res) {
 
 app.listen(process.env.PORT || 8080);
 
-console.log('Running on http://localhost:' + process.env.PORT || 8080);
+console.log('Running Rust Compilation Server on http://localhost:' + process.env.PORT || 8080);
