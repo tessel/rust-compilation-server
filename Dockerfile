@@ -16,8 +16,6 @@ RUN tar xf OpenWrt-SDK-ramips-mt7620_gcc-4.8-linaro_uClibc-0.9.33.2.Linux-x86_64
 ENV STAGING_DIR /usr/x-compile/OpenWrt-SDK-ramips-mt7620_gcc-4.8-linaro_uClibc-0.9.33.2.Linux-x86_64/staging_dir
 ENV PATH $STAGING_DIR/toolchain-mipsel_24kec+dsp_gcc-4.8-linaro_uClibc-0.9.33.2/bin/:$PATH
 
-RUN echo $STAGING_DIR
-
 # Pull down Rust source @ 1.5.0
 RUN git clone https://github.com/rust-lang/rust; cd rust; git checkout tags/1.5.0
 # Pull down and extract the Rust installer
@@ -60,6 +58,7 @@ ENV PORT 8080
 # Expose our port
 EXPOSE $PORT
 
+# Print out debug info from our server
 ENV DEBUG *
 
 # Start up our server
