@@ -56,13 +56,17 @@ app.post('/rust-compile', function(req, res) {
               // No error on compilation
               else {
                   // Figure out the path to the binary
-                  var binaryPath = path.join(projectPath, 'target/tessel2/release/', binaryName);
+                  var binaryPath = path.join(projectPath, 'target/tessel2/release/');
                   // Send the status flag
                   res.status(200);
                   // Pack up the compiled binary and send it back down
-                  var stream = fs.createReadStream(binaryPath).pipe(res);
+                  // TODO: Make the binary the only file in the folder
+                  var stream = tar.pack(binaryPath).pipe(res);
                   // When we finish writing the file to the CLI, delete the temp folder
-                  stream.on('finish', temp.cleanupSync);
+                  stream.once('finish', () => {
+                    debug('Finished cross compilation job.');
+                    temp.cleanupSync();
+                  });
               }
           });
       });
