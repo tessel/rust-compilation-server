@@ -61,5 +61,8 @@ EXPOSE $PORT
 # Print out debug info from our server
 ENV DEBUG *
 
-# Start up our server
-CMD ["node", "index.js"]
+# Add PM2 for long-lived process mgmt
+RUN npm install pm2 -g
+
+# Start up our server with PM2 under the name "rustcc"
+CMD ["pm2", "start", "index.js", "--name", "rustcc", "--no-daemon"]
