@@ -2,7 +2,7 @@
   "author": "Jon McKay <jon@tessel.io>",
   "name": "rust-compilation-server",
   "description": "A server designed to build Rust projects for Tessel 2",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "repository": {
     "url": ""
   },
