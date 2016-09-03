@@ -1,4 +1,6 @@
 # rust-compilation-server
+[![Code of Conduct](https://img.shields.io/badge/%E2%9D%A4-code%20of%20conduct-blue.svg?style=flat)](https://github.com/tessel/project/blob/master/CONDUCT.md)
+
 A server to run on an Linux box with Rust MIPS Cross Compilation capabilities. 
 
 ## Dependencies
