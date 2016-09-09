@@ -1,0 +1,5 @@
+[target.mipsel-unknown-linux-gnu]
+linker = "mipsel-openwrt-linux-gcc"
+
+[build]
+target = "mipsel-unknown-linux-gnu"
