@@ -84,3 +84,13 @@ The server sends back error code 400 is the compilation fails for whatever reaso
 The [cross compilation server](https://github.com/tessel/rust-compilation-server) describes a Docker instance as well as Node server that presents an single API endpoint for cross-compilation for Rust. It receives a POST request that sends a tarred project directory, cross compiles that project, then sends the tarred binary back down to the client.
 
 The cross compilation server is a critical tool for helping new Rust users get started quickly without installing external dependencies. However, we want to encourage users to use [`rustup`](http://blog.rust-lang.org/2016/05/13/rustup.html) locally for more mature Tessel projects. Until we have a path forward for Windows users and infrastructure for building against the Tessel SDK easily, we will be maintaining both implementations to provide the best experiences possible.
+
+## Updating the Build Server
+This cross-compilation Docker machine is deployed to a Digital Ocean box at 192.241.138.79. Below are the steps to update it. They assume that you have SSH access to the box. If you think you should but you do not, send a message to the #ops channel on [Tessel Slack](http://tessel-slack.herokuapp.com/).
+
+```
+>  ssh root@192.241.138.79
+>  docker pull johnnyman727/rust-compilation-server:v1.2 # Replace with destination image
+>  docker stop $(docker ps -a -q); docker rm $(docker ps -a -q) # Stop currently running container
+>  docker run -p 49160:8080 johnnyman727/rust-compilation-server:v1.2 & # Start the updated server on port 8080 in the background
+```
