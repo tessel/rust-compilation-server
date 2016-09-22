@@ -71,7 +71,7 @@ app.post('/rust-compile', function(req, res) {
         // Save the path to this project
         var projectPath = path.join(dirPath, projectName);
         // Save a path to where the compiled binary will be
-        var binaryPath = path.join(projectPath, 'target/tessel2/release/');
+        var binaryPath = path.join(projectPath, 'target/mipsel-unknown-linux-gnu/release/');
 
         // Read the contents of the Cargo.toml to extract binary name
         // Print out the binary name
@@ -92,7 +92,7 @@ app.post('/rust-compile', function(req, res) {
         var binaryName = cargoToml.package.name;
 
         // Create a child process that will compile the project
-        var child = exec('cargo build --target=tessel2 --release',
+        var child = exec('cargo build --target=mipsel-unknown-linux-gnu --release',
         {
           // Work out of the directory of the created folder
           cwd: projectPath,
