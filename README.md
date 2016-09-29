@@ -17,8 +17,8 @@ Local development:
 
 Or, to install from source through Docker:
 
-* Either clone this source or pull the docker image (`docker pull johnnyman727/rust-compilation-server`)
-* Build and run the server with `docker run -p 49160:8080 -d johnnyman727/rust-compilation-server`.
+* Either clone this source or pull the docker image (`docker pull tessel/rust-compilation-server`)
+* Build and run the server with `docker run -p 49160:8080 -d tessel/rust-compilation-server`.
 
 The server will be bound to `localhost:49160`. Once the server is running:
 
@@ -90,7 +90,7 @@ This cross-compilation Docker machine is deployed to a Digital Ocean box at 192.
 
 ```
 >  ssh root@192.241.138.79
->  docker pull johnnyman727/rust-compilation-server:v1.2 # Replace with destination image
+>  docker pull tessel/rust-compilation-server:v1.2 # Replace with destination image
 >  docker stop $(docker ps -a -q); docker rm $(docker ps -a -q) # Stop currently running container
->  docker run -p 49160:8080 johnnyman727/rust-compilation-server:v1.2 & # Start the updated server on port 8080 in the background
+>  docker run -p 49160:8080 tessel/rust-compilation-server:v1.2 & # Start the updated server on port 8080 in the background
 ```
