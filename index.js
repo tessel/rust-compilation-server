@@ -8,7 +8,7 @@ var debug = require('debug')('server');
 var base64 = require('base64-stream');
 
 // System
-var exec = require('child_process').exec;
+var spawn = require('child_process').spawn;
 var path = require('path');
 var fs = require('fs');
 var stream = require('stream');
@@ -30,7 +30,10 @@ app.post('/rust-compile', function(req, res) {
   }
 
   // Make note that we are starting a ccx process
-  debug('Received a request for project.');
+  debug('Received a request for project - target ${req.query.target}.');
+
+  // Target for build.
+  var target = (req.query.target || '').toString();
 
   // Create a temporary directory for the incoming project
   temp.mkdir(tmpPrefix, function(mkdirError, dirPath) {
@@ -70,43 +73,66 @@ app.post('/rust-compile', function(req, res) {
         debug("Project name:", projectName);
         // Save the path to this project
         var projectPath = path.join(dirPath, projectName);
-        // Save a path to where the compiled binary will be
-        var binaryPath = path.join(projectPath, 'target/mipsel-unknown-linux-gnu/release/');
 
-        // Read the contents of the Cargo.toml to extract binary name
-        // Print out the binary name
-        try {
-          var cargoToml = toml.parse(fs.readFileSync(path.join(projectPath, 'Cargo.toml'), 'utf8'));
-        }
-        catch (error) {
-          debug("Problem parsing Cargo.toml :", error);
-          return rejectRequest(responseCodes.HTTP_BAD_REQUEST, error);
-        }
+        // // Save a path to where the compiled binary will be
+        // var binaryPath = path.join(projectPath, 'target/mipsel-unknown-linux-gnu/release/');
+        //
+        // // Read the contents of the Cargo.toml to extract binary name
+        // // Print out the binary name
+        // try {
+        //   var cargoToml = toml.parse(fs.readFileSync(path.join(projectPath, 'Cargo.toml'), 'utf8'));
+        // }
+        // catch (error) {
+        //   debug("Problem parsing Cargo.toml :", error);
+        //   return rejectRequest(responseCodes.HTTP_BAD_REQUEST, error);
+        // }
 
         // Ensure the Cargo.toml has a package field and a name property
-        if (cargoToml.package === undefined || cargoToml.package.name === undefined) {
-          return rejectResponse(responseCodes.HTTP_BAD_REQUEST, 'No package name found in Cargo.toml');
-        }
+        // if (cargoToml.package === undefined || cargoToml.package.name === undefined) {
+        //   return rejectResponse(responseCodes.HTTP_BAD_REQUEST, 'No package name found in Cargo.toml');
+        // }
 
         // Save the name of the final binary so we can exclude all other files
-        var binaryName = cargoToml.package.name;
+        // var binaryName = cargoToml.package.name;
 
         // Create a child process that will compile the project
-        var child = exec('cargo build --target=mipsel-unknown-linux-gnu --release',
+        var child = spawn('cargo', ['tessel', 'build', '--bin', target],
         {
           // Work out of the directory of the created folder
           cwd: projectPath,
-        },
-        function (error, stdout, stderr) {
-          debug(`output of compilation - error: ${error}, stdout: ${stdout}, stderr: ${stderr}`)
+        });
 
-          // If we had an error with the command
-          if (error !== null) {
+        var stdout = [];
+        child.stdout.on('data', (data) => {
+          stdout.push(data);
+        })
+
+        var stderr = [];
+        child.stderr.on('data', (data) => {
+          stderr.push(data);
+        })
+
+        child.on('error', (error) => {
+          // Report the error
+          rejectRequest(responseCodes.HTTP_INTERNAL_SERVER_ERROR, error.message);
+        });
+
+        child.on('close', (status) => {
+          // trim stdout/stderr
+          stderr = Buffer.concat(stderr).toString().replace(/^\s+|\s+$/g, '');
+          stdout = Buffer.concat(stdout).toString().replace(/^\s+|\s+$/g, '');
+
+          debug(`output of compilation - status: ${status}, stdout: ${stdout}, stderr: ${stderr}`)
+
+          // If no file was generated:
+          if (status != 0 || stdout == '') {
             // Report the error
-            return rejectRequest(responseCodes.HTTP_INTERNAL_SERVER_ERROR, error.message);
+            return rejectRequest(responseCodes.HTTP_INTERNAL_SERVER_ERROR, stderr);
           }
           // Send the status flag
           res.status(responseCodes.HTTP_OK);
+
+          var binaryPath = stdout;
 
           /*
            Write all the parts of the results JSON except the binary.
@@ -124,7 +150,7 @@ app.post('/rust-compile', function(req, res) {
 
           // Create a stream that starts packing only the compiled binary
           // Base-64 encode it because we're loading it into JSON (strings)
-          var packingStream = tar.pack(binaryPath, {entries : [binaryName]})
+          var packingStream = fs.createReadStream(binaryPath)
             .pipe(base64.encode());
 
           // Pipe the archived binary into the result but do not end response pipe
@@ -148,4 +174,4 @@ app.post('/rust-compile', function(req, res) {
 
 app.listen(process.env.PORT || 8080);
 
-console.log('Running Rust Compilation Server on http://localhost:' + process.env.PORT || 8080);
+console.log('Running Rust Compilation Server on http://localhost:' + (process.env.PORT || 8080));
